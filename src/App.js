@@ -1,5 +1,8 @@
 import "./App.css";
 import { useEffect, useRef, useState } from "react";
+import { Input } from "./styledComponents/checkbox";
+import { Center } from "./styledComponents/center";
+import { Flex } from "./styledComponents/flex";
 
 function App() {
   const rows = 12;
@@ -12,6 +15,8 @@ function App() {
   const [pixelGrid, setPixelGrid] = useState(
     Array(rows * columns).fill("white")
   );
+
+  const [hideGrid, setHideGrid] = useState(false);
 
   const canvasRef = useRef(null);
 
@@ -30,12 +35,13 @@ function App() {
 
         // Draw the grid cell
         ctx.strokeStyle = "black";
-        ctx.strokeRect(
-          columnIndex * cellSize,
-          rowIndex * cellSize,
-          cellSize,
-          cellSize
-        );
+        if (!hideGrid)
+          ctx.strokeRect(
+            columnIndex * cellSize,
+            rowIndex * cellSize,
+            cellSize,
+            cellSize
+          );
 
         // Draw the colored dot
         ctx.fillStyle = dotColor;
@@ -47,7 +53,7 @@ function App() {
         );
       }
     }
-  }, [pixelGrid]);
+  }, [pixelGrid, hideGrid]);
 
   const handleColorize = (index) => {
     setPixelGrid((grid) => {
@@ -58,8 +64,10 @@ function App() {
   };
 
   const handleClick = (e) => {
-    const columnIndex = Math.floor(e.clientX / cellSize);
-    const rowIndex = Math.floor(e.clientY / cellSize);
+    const rect = e.target.getBoundingClientRect();
+
+    const columnIndex = Math.floor((e.clientX - rect.left) / cellSize);
+    const rowIndex = Math.floor((e.clientY - rect.top) / cellSize);
 
     const dotIndex = rowIndex * columns + columnIndex;
 
@@ -67,12 +75,23 @@ function App() {
   };
 
   return (
-    <canvas
-      ref={canvasRef}
-      width={canvasWidth}
-      height={canvasHeight}
-      onClick={handleClick}
-    ></canvas>
+    <Center>
+      <canvas
+        ref={canvasRef}
+        width={canvasWidth}
+        height={canvasHeight}
+        onClick={handleClick}
+      ></canvas>
+      <Flex>
+        <Input
+          type="checkbox"
+          onClick={() => setHideGrid((hide) => !hide)}
+          checked={hideGrid}
+          id="hideGrid"
+        />
+        <label for="hideGrid">Hide grid</label>
+      </Flex>
+    </Center>
   );
 }
 
