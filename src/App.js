@@ -12,6 +12,8 @@ function App() {
   const canvasWidth = columns * cellSize;
   const canvasHeight = rows * cellSize;
 
+  const [isDrawing, setIsDrawing] = useState(false);
+
   const [pixelGrid, setPixelGrid] = useState(
     Array(rows * columns).fill("white")
   );
@@ -24,14 +26,11 @@ function App() {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
 
-    // Clear the canvas
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
     // Draw the grid and colored dots
     for (let rowIndex = 0; rowIndex < rows; rowIndex++) {
       for (let columnIndex = 0; columnIndex < columns; columnIndex++) {
-        const dotIndex = rowIndex * columns + columnIndex;
-        const dotColor = pixelGrid[dotIndex];
+        const pixelIndex = rowIndex * columns + columnIndex;
+        const dotColor = pixelGrid[pixelIndex];
 
         // Draw the grid cell
         ctx.strokeStyle = "black";
@@ -53,9 +52,24 @@ function App() {
         );
       }
     }
-  }, [pixelGrid, hideGrid]);
+  }, [pixelGrid, isDrawing, hideGrid]);
 
-  const handleColorize = (index) => {
+  useEffect(() => {
+    console.log(isDrawing);
+  }, [isDrawing]);
+
+  const getPixelIndex = (e) => {
+    const rect = e.target.getBoundingClientRect();
+
+    const columnIndex = Math.floor((e.clientX - rect.left) / cellSize);
+    const rowIndex = Math.floor((e.clientY - rect.top) / cellSize);
+
+    const pixelIndex = rowIndex * columns + columnIndex;
+
+    return pixelIndex;
+  };
+
+  const colorize = (index) => {
     setPixelGrid((grid) => {
       const colors = [...grid];
       colors[index] = "blue";
@@ -64,14 +78,17 @@ function App() {
   };
 
   const handleClick = (e) => {
-    const rect = e.target.getBoundingClientRect();
+    setIsDrawing(true);
 
-    const columnIndex = Math.floor((e.clientX - rect.left) / cellSize);
-    const rowIndex = Math.floor((e.clientY - rect.top) / cellSize);
+    const index = getPixelIndex(e);
+    colorize(index);
+  };
 
-    const dotIndex = rowIndex * columns + columnIndex;
-
-    handleColorize(dotIndex);
+  const handleDrag = (e) => {
+    if (isDrawing) {
+      const index = getPixelIndex(e);
+      colorize(index);
+    }
   };
 
   return (
@@ -80,7 +97,9 @@ function App() {
         ref={canvasRef}
         width={canvasWidth}
         height={canvasHeight}
-        onClick={handleClick}
+        onMouseMove={handleDrag}
+        onMouseDown={handleClick}
+        onMouseUp={() => setIsDrawing(false)}
       ></canvas>
       <Flex>
         <Input
